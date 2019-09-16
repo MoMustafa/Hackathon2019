@@ -14,7 +14,7 @@ Choose Active Solution Configuration to be "Release"
 
 Select Active Solution Platform to be x64
 
-If x64 is not an available option, select <New> and create an x64 configuration with the option to copy settings from AnyCPU
+If x64 is not an available option, select \<New\> and create an x64 configuration with the option to copy settings from AnyCPU
 
 Right click you solution and hit Build Solution
 
