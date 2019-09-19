@@ -1,12 +1,4 @@
-﻿using Alturos.Yolo;
-using Alturos.Yolo.Model;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Linq;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace DetectionProgram
 {
@@ -42,6 +34,7 @@ namespace DetectionProgram
             this.btnOpen = new System.Windows.Forms.Button();
             this.btnDetect = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
+            this.btnOCR = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.ImgBox)).BeginInit();
             this.SuspendLayout();
             // 
@@ -51,7 +44,7 @@ namespace DetectionProgram
             this.ImgBox.Location = new System.Drawing.Point(12, 16);
             this.ImgBox.Name = "ImgBox";
             this.ImgBox.Size = new System.Drawing.Size(551, 370);
-            this.ImgBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.ImgBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.ImgBox.TabIndex = 2;
             this.ImgBox.TabStop = false;
             // 
@@ -67,7 +60,7 @@ namespace DetectionProgram
             // 
             // btnDetect
             // 
-            this.btnDetect.Location = new System.Drawing.Point(574, 68);
+            this.btnDetect.Location = new System.Drawing.Point(574, 53);
             this.btnDetect.Name = "btnDetect";
             this.btnDetect.Size = new System.Drawing.Size(214, 31);
             this.btnDetect.TabIndex = 1;
@@ -77,7 +70,7 @@ namespace DetectionProgram
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(574, 117);
+            this.btnSave.Location = new System.Drawing.Point(574, 90);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(214, 31);
             this.btnSave.TabIndex = 3;
@@ -85,11 +78,22 @@ namespace DetectionProgram
             this.btnSave.UseVisualStyleBackColor = true;
             this.btnSave.Click += new System.EventHandler(this.BtnSave_Click);
             // 
+            // btnOCR
+            // 
+            this.btnOCR.Location = new System.Drawing.Point(574, 127);
+            this.btnOCR.Name = "btnOCR";
+            this.btnOCR.Size = new System.Drawing.Size(213, 31);
+            this.btnOCR.TabIndex = 4;
+            this.btnOCR.Text = "OCR";
+            this.btnOCR.UseVisualStyleBackColor = true;
+            this.btnOCR.Click += new System.EventHandler(this.BtnOCR_Click);
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnOCR);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.ImgBox);
             this.Controls.Add(this.btnDetect);
@@ -102,103 +106,6 @@ namespace DetectionProgram
         }
 
         #endregion
-
-        private System.Windows.Forms.Button btnOpen;
-        private System.Windows.Forms.Button btnDetect;
-        private System.Windows.Forms.PictureBox ImgBox;
-        private Button btnSave;
-
-        private string CONFIG_FILE = "yolov2-tiny-voc.cfg";
-        private string WEIGHTS_FILE = "yolov2-tiny-voc.weights";
-        private string NAMES_FILE = "voc.names";
-        private string COMPATIBLE_FILETYPES = "JPEG|*.jpg|PNG|*.png";
-
-        private List<Rectangle> DetectedObjects = new List<Rectangle>();
-
-        private void BtnOpen_Click(object sender, EventArgs args)
-        {
-            using (OpenFileDialog fileDialog = new OpenFileDialog() { Filter = COMPATIBLE_FILETYPES})
-            {
-                if (fileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    ImgBox.Image = Image.FromFile(fileDialog.FileName);
-                }
-            }
-        }
-
-        private void BtnDetect_Click(object sender, EventArgs args)
-        {
-            using (var yoloWrapper = new YoloWrapper(CONFIG_FILE, WEIGHTS_FILE, NAMES_FILE))
-            {
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    ImgBox.Image.Save(ms, ImageFormat.Png);
-                    var items = yoloWrapper.Detect(ms.ToArray()).ToList();
-                    DetectedObjects = DetectObjects(ImgBox, items);
-                }
-                
-            }
-        }
-
-        private void BtnSave_Click(object sender, EventArgs args)
-        {
-            foreach(var detected_object in DetectedObjects)
-            {
-                Image obj = Crop(ImgBox.Image, detected_object);
-
-                using(SaveFileDialog saveFileDialog = new SaveFileDialog() { Filter = COMPATIBLE_FILETYPES})
-                {
-                    saveFileDialog.ShowDialog();
-
-                    if(saveFileDialog.FileName != "")
-                    {
-                        FileStream fs = (FileStream)saveFileDialog.OpenFile();
-
-                        switch(saveFileDialog.FilterIndex)
-                        {
-                            case 1:
-                                obj.Save(fs, ImageFormat.Jpeg);
-                                break;
-                            case 2:
-                                obj.Save(fs, ImageFormat.Png);
-                                break;
-                        }
-
-                        fs.Close();
-                    }
-                }
-            }
-        }
-
-        private List<Rectangle> DetectObjects(PictureBox ImgToExamine, List<YoloItem> items)
-        {
-            var img = ImgToExamine.Image;
-            var graphics = Graphics.FromImage(img);
-
-            List<Rectangle> BoundingBoxes = new List<Rectangle>();
-
-            foreach (var item in items)
-            {
-                var rect = new Rectangle(item.X, item.Y, item.Width, item.Height);
-                var pen = new Pen(Color.Red, 3);
-
-                graphics.DrawRectangle(pen, rect);
-
-                BoundingBoxes.Add(rect);
-
-
-            }
-
-            ImgToExamine.Image = img;
-            return BoundingBoxes;
-        }
-
-        private Image Crop(Image img, Rectangle selection)
-        {
-            Bitmap obj = img as Bitmap;
-
-            return obj.Clone(selection, obj.PixelFormat);
-        }
     }
 }
 
